@@ -1,0 +1,99 @@
+# This is a yaml file fo
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: TaskFlow Serverless Task Manager Backend
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 256
+
+Resources:
+
+  # ── CREATE TASK ───────────────────────────────────────
+  CreateTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/create_task/
+      Handler: app.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TasksTable
+      Events:
+        CreateTask:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: post
+
+  # ── LIST TASKS ────────────────────────────────────────
+  ListTasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/list_tasks/
+      Handler: app.lambda_handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TasksTable
+      Events:
+        ListTasks:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: get
+
+  # ── UPDATE TASK ───────────────────────────────────────
+  UpdateTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/update_task/
+      Handler: app.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TasksTable
+      Events:
+        UpdateTask:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}
+            Method: put
+
+  # ── DELETE TASK ───────────────────────────────────────
+  DeleteTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/delete_task/
+      Handler: app.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TasksTable
+      Events:
+        DeleteTask:
+          Type: Api
+          Properties:
+            Path: /tasks/{taskId}
+            Method: delete
+
+  # ── The DynamoDB Table (reference to existing table)
+  TasksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: task-manager
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
