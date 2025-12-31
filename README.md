@@ -80,9 +80,25 @@ AWS DynamoDB is used as the primary data store for tasks. It provides a scalable
 
 ---
 
+## Current Status
+
+- Frontend skeleton and styling completed
+
+- DynamoDB table created with single-table design
+- Local development environment fully functional (SAM CLI + Docker)
+- All CRUD endpoints implemented and tested locally
+- Backend deployed to AWS with public API endpoint
+- Live API tested via Postman
+
 ## Under Development
 
-This project is currently under development. Features and architecture may change as the project evolves.
-Contributions and feedback are welcome!
+- Cognito integration and JWT authorizer
+
+- Frontend connection to the live API
+
+- Authentication flow in the UI
+
+- Static site deployment to S3 + CloudFront
+- Optional future enhancements (reminders, file attachments)
 
 ---
