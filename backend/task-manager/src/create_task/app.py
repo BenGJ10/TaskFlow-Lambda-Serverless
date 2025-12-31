@@ -28,7 +28,7 @@ def lambda_handler(event, context):
         
         # Generate unique identifiers
         user_id = "USER#test-user-123"  # ← temporary fake user (later from Cognito)
-        task_id = f"TASK#{datetime.utcnow().isoformat()}-{uuid.uuid4().hex[:8]}"
+        task_id = f"TASK-{datetime.utcnow().isoformat()}-{uuid.uuid4().hex[:8]}"
 
         # Prepare the item to be inserted
         item = {
