@@ -1,5 +1,3 @@
-# This is a yaml file fo
-
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: TaskFlow Serverless Task Manager Backend
@@ -12,7 +10,23 @@ Globals:
 
 Resources:
 
-  # ── CREATE TASK ───────────────────────────────────────
+  # ---------------- HTTP API (v2) ----------------
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+
+  # ---------------- CREATE TASK ----------------
   CreateTaskFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -23,12 +37,13 @@ Resources:
             TableName: !Ref TasksTable
       Events:
         CreateTask:
-          Type: Api
+          Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /tasks
-            Method: post
+            Method: POST
 
-  # ── LIST TASKS ────────────────────────────────────────
+  # ---------------- LIST TASKS ----------------
   ListTasksFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -39,12 +54,13 @@ Resources:
             TableName: !Ref TasksTable
       Events:
         ListTasks:
-          Type: Api
+          Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /tasks
-            Method: get
+            Method: GET
 
-  # ── UPDATE TASK ───────────────────────────────────────
+  # ---------------- UPDATE TASK ----------------
   UpdateTaskFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -55,12 +71,13 @@ Resources:
             TableName: !Ref TasksTable
       Events:
         UpdateTask:
-          Type: Api
+          Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /tasks/{taskId}
-            Method: put
+            Method: PUT
 
-  # ── DELETE TASK ───────────────────────────────────────
+  # ---------------- DELETE TASK ----------------
   DeleteTaskFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -71,12 +88,13 @@ Resources:
             TableName: !Ref TasksTable
       Events:
         DeleteTask:
-          Type: Api
+          Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /tasks/{taskId}
-            Method: delete
+            Method: DELETE
 
-  # ── The DynamoDB Table (reference to existing table)
+  # ---------------- DYNAMODB TABLE ----------------
   TasksTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -95,5 +113,5 @@ Resources:
 
 Outputs:
   ApiUrl:
-    Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "${HttpApi.ApiEndpoint}"
