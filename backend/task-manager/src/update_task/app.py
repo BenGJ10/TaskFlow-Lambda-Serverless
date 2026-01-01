@@ -7,6 +7,13 @@ from datetime import datetime
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('task-manager')
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Content-Type": "application/json"
+}
+
 def lambda_handler(event, context):
     """
     Update an existing task.
@@ -20,7 +27,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'taskId is required in path'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         
         # Parse body (fields to update)
@@ -30,7 +37,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'No fields provided to update'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         
         # For now, use a fixed test user ID
@@ -47,7 +54,7 @@ def lambda_handler(event, context):
         # Allowed updatable fields
         allowed_fields = {
             'title', 'description', 'dueDate', 'category',
-            'priority', 'isStarred', 'status'
+            'priority', 'isStarred', 'isCompleted'
         }
 
         # Update only allowed fields, if any invalid field is provided, it is ignored.
@@ -60,10 +67,10 @@ def lambda_handler(event, context):
                         value = 'medium'
                 elif key == 'isStarred':
                     value = bool(value)
+                elif key == 'isCompleted':
+                    value = bool(value)
                 elif key in {'title', 'description', 'category'}:
                     value = str(value).strip()
-                elif key == 'status':
-                    value = str(value).lower() if value else 'active'
 
                 update_expression += f", {key} = :{key}"
                 expression_attribute_values[f':{key}'] = value
@@ -86,15 +93,12 @@ def lambda_handler(event, context):
         # Success response
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': 'Task updated successfully',
                 'taskId': task_id,
                 'updatedTask': updated_item
-            }, indent=2),
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+            }, indent=2)
         }
 
     except ClientError as e:
@@ -103,16 +107,16 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Task not found or does not belong to user'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         return {
             'statusCode': 500,
             'body': json.dumps({'error': e.response['Error']['Message']}),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }
     except Exception as e:
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)}),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }

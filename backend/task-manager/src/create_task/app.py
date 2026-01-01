@@ -7,6 +7,13 @@ from datetime import datetime
 dynamodb = boto3.resource('dynamodb') 
 table = dynamodb.Table('task-manager') 
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Content-Type": "application/json"
+}
+
 def lambda_handler(event, context):
     """
     Lambda function to create a new task in the DynamoDB table.
@@ -23,7 +30,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'title is required and cannot be empty'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         
         # Generate unique identifiers
@@ -40,7 +47,7 @@ def lambda_handler(event, context):
             'category': body.get('category', 'personal').strip() or None,  # empty string → None
             'priority': body.get('priority', 'low').lower(),
             'isStarred': body.get('isStarred', False),
-            'status': body.get('status', 'active').lower(),
+            'isCompleted': body.get('isCompleted', False),
             'createdAt': datetime.utcnow().isoformat(),
             'updatedAt': datetime.utcnow().isoformat()
         }
@@ -56,23 +63,20 @@ def lambda_handler(event, context):
         # Success response
         return {
             'statusCode': 201,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': 'Task created successfully',
                 'taskId': task_id,
                 'task': item
-            }, indent=2),
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'  # temporary for local testing
-            }
+            }, indent=2)
         }
 
     except Exception as e:
         return {
             'statusCode': 500,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'error': 'Failed to create task',
                 'details': str(e)
-            }),
-            'headers': {'Content-Type': 'application/json'}
+            })
         }

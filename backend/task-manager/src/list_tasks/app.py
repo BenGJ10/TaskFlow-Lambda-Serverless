@@ -6,6 +6,13 @@ from botocore.exceptions import ClientError
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('task-manager')
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Content-Type": "application/json"
+}
+
 def lambda_handler(event, context):
     """
     List all tasks for the current user.
@@ -34,14 +41,11 @@ def lambda_handler(event, context):
         # Success response
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': f'Found {len(items)} tasks',
                 'tasks': items
-            }, indent = 2),
-            'headers': { # CORS headers
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'  # for local Postman/browser testing
-            }
+            }, indent = 2)
         }
     
     except ClientError as e:
@@ -51,12 +55,12 @@ def lambda_handler(event, context):
                 'error': 'DynamoDB query failed',
                 'details': e.response['Error']['Message']
             }),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }
     except Exception as e:
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)}),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }
         

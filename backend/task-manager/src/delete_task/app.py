@@ -6,6 +6,13 @@ from botocore.exceptions import ClientError
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('task-manager')
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Content-Type": "application/json"
+}
+
 def lambda_handler(event, context):
     """
     Delete an existing task.
@@ -19,7 +26,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'taskId is required in path'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
 
         # Fake user (later from Cognito)
@@ -47,21 +54,18 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Task not found'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         
         # Return success response
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': 'Task deleted successfully',
                 'taskId': task_id,
                 'deletedTask': deleted_item
-            }, indent=2),
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+            }, indent=2)
         }
     
     except ClientError as e:
@@ -70,16 +74,16 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Task not found or does not belong to user'}),
-                'headers': {'Content-Type': 'application/json'}
+                'headers': CORS_HEADERS
             }
         return {
             'statusCode': 500,
             'body': json.dumps({'error': e.response['Error']['Message']}),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }
     except Exception as e:
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)}),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': CORS_HEADERS
         }
