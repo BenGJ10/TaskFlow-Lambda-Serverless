@@ -22,7 +22,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-semibold text-gray-800 mb-3">Simple & Secure</h3>
             <p className="text-gray-600">
-              AWS Cognito handles authentication. RESTful API keeps everything clean and predictable.
+              Secure sign-up, sign-in, and session management powered by Amazon Cognito.
             </p>
           </div>
 
@@ -50,7 +50,7 @@ export default function Home() {
         {/* Call-to-action buttons */}
         <div className="flex flex-col sm:flex-row gap-5">
           <a
-            href="#get-started" // replace with your demo or tasks page link
+            href="/dashboard" // replace with your demo or tasks page link
             className="px-9 py-5 bg-teal-600 hover:bg-teal-700 text-white font-medium text-lg rounded-xl transition-all shadow-md shadow-teal-200/50"
           >
             Try Live Demo

@@ -5,7 +5,8 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { Plus, Star, Pencil, Trash2, CheckSquare } from 'lucide-react';
 import { api, Task } from '@/lib/api';
-import AddTaskModal from '@/components/AddTaskModal'; // ← import the modal we created
+import AddTaskModal from '@/components/AddTaskModal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const fetcher = () => api.getTasks();
 
@@ -17,13 +18,16 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+
   const handleOpenModal = (task?: Task) => {
     setEditingTask(task || null);
     setIsModalOpen(true);
   };
 
   const handleTaskCreated = (newTask: Task) => {
-    mutate([...tasks, newTask], false); // optimistic add + no revalidate yet
+    mutate([...tasks, newTask], false); 
   };
 
   const handleTaskUpdated = (updatedTask: Task) => {
@@ -53,13 +57,21 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (taskId: string) => {
-    if (!confirm('Delete this task?')) return;
+  const openDeleteConfirm = (taskId: string) => {
+    setTaskToDelete(taskId);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!taskToDelete) return;
     try {
-      await api.deleteTask(taskId);
-      mutate(tasks.filter(t => t.SK !== taskId), false);
+      await api.deleteTask(taskToDelete);
+      mutate(tasks.filter(t => t.SK !== taskToDelete), false);
     } catch (err) {
       console.error('Delete failed', err);
+    } finally {
+      setIsDeleteOpen(false);
+      setTaskToDelete(null);
     }
   };
 
@@ -174,7 +186,7 @@ export default function Dashboard() {
                     <button onClick={() => handleOpenModal(task)} className="hover:text-teal-600">
                       <Pencil size={18} />
                     </button>
-                    <button onClick={() => handleDelete(task.SK)} className="hover:text-red-600">
+                    <button onClick={() => openDeleteConfirm(task.SK)} className="hover:text-red-600">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -201,7 +213,19 @@ export default function Dashboard() {
         }
         onTaskCreated={handleTaskCreated}
         onTaskUpdated={handleTaskUpdated}
-        existingTask={editingTask || undefined}
+        existingTask={editingTask || undefined}    
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={handleDelete}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
       />
     </div>
   );
