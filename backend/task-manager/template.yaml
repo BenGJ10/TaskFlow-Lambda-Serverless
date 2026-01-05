@@ -9,6 +9,37 @@ Globals:
     MemorySize: 256
 
 Resources:
+  
+  # ---------------- COGNITO USER POOL ----------------
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: taskflow-userpool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+  
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: taskflow-frontend
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - http://localhost:3000/dashboard
+      LogoutURLs:
+        - http://localhost:3000/
+      SupportedIdentityProviders:
+        - COGNITO
+
 
   # ---------------- HTTP API (v2) ----------------
   HttpApi:
@@ -25,6 +56,16 @@ Resources:
           - "*"
         AllowHeaders:
           - "*"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            AuthorizationType: JWT
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
+              audience:
+                - !Ref UserPoolClient     
 
   # ---------------- CREATE TASK ----------------
   CreateTaskFunction:
@@ -93,7 +134,7 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /tasks/{taskId}
             Method: DELETE
-
+            
   # ---------------- DYNAMODB TABLE ----------------
   TasksTable:
     Type: AWS::DynamoDB::Table
