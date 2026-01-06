@@ -21,8 +21,19 @@ def lambda_handler(event, context):
     """
     try:
 
-        # For now, use a fixed test user ID
-        user_id = "USER#test-user-123"  # ← temporary fake user (later from Cognito)
+       # Extract Cognito user sub from authorizer claims
+        try:
+            claims = event["requestContext"]["authorizer"]["jwt"]["claims"]
+            user_sub = claims["sub"]
+        except Exception:
+            return {
+                "statusCode": 401,
+                "headers": CORS_HEADERS,
+                "body": json.dumps({"error": "Unauthorized: missing or invalid token"}),
+            }
+        
+        # Generate unique identifiers
+        user_id = f"USER#{user_sub}"
 
         # Prepare the query parameters
         response = table.query(

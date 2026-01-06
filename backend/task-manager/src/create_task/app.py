@@ -33,8 +33,19 @@ def lambda_handler(event, context):
                 'headers': CORS_HEADERS
             }
         
+        # Extract Cognito user sub from authorizer claims
+        try:
+            claims = event["requestContext"]["authorizer"]["jwt"]["claims"]
+            user_sub = claims["sub"]
+        except Exception:
+            return {
+                "statusCode": 401,
+                "headers": CORS_HEADERS,
+                "body": json.dumps({"error": "Unauthorized: missing or invalid token"}),
+            }
+        
         # Generate unique identifiers
-        user_id = "USER#test-user-123"  # ← temporary fake user (later from Cognito)
+        user_id = f"USER#{user_sub}"
         task_id = f"TASK-{datetime.utcnow().isoformat()}-{uuid.uuid4().hex[:8]}"
 
         # Prepare the item to be inserted
